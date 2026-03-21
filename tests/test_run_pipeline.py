@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 
-SCRIPT_PATH = pathlib.Path("/Users/limingwu/Documents/mvp/police/skills/market-demand-research/scripts/run_pipeline.py")
+SCRIPT_PATH = pathlib.Path(__file__).resolve().parents[1] / "scripts" / "run_pipeline.py"
 SPEC = importlib.util.spec_from_file_location("market_demand_run_pipeline", SCRIPT_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

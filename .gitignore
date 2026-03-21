@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+# runtime outputs
+data/*.jsonl
+data/*.json
+reports/
+reports-*/
+data-cross-border/
+
+# local state
+state.json

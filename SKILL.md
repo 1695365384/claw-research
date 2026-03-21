@@ -125,7 +125,7 @@ Do not treat the run as complete after candidate preparation alone.
 ## Quick Start
 
 ```bash
-cd /Users/limingwu/Documents/mvp/police/skills/market-demand-research
+cd /path/to/openclaw-market-demand-research
 
 python3 scripts/run_pipeline.py \
   --project-name "shopify-support-research" \
