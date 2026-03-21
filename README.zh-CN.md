@@ -1,4 +1,4 @@
-# openclaw-market-demand-research
+# claw-research
 
 OpenClaw / Codex 的市场需求调研技能仓库。
 
@@ -6,7 +6,7 @@ OpenClaw / Codex 的市场需求调研技能仓库。
 
 ## 简介
 
-`openclaw-market-demand-research` 是一个独立的技能仓库，用来承载可重复执行的市场需求调研工作流。
+`claw-research` 是一个独立的技能仓库，用来承载可重复执行的市场需求调研工作流。
 
 它适合这样的场景：外层 agent 已经拿到帖子、评论、抱怨、issue、剪藏摘录等市场信号，需要一套稳定流程去：
 
@@ -66,7 +66,7 @@ OpenClaw / Codex 的市场需求调研技能仓库。
 ## 仓库结构
 
 ```text
-openclaw-market-demand-research/
+claw-research/
 ├── SKILL.md
 ├── README.md
 ├── README.zh-CN.md

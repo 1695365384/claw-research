@@ -1,4 +1,4 @@
-# openclaw-market-demand-research
+# claw-research
 
 Market-demand research skill for OpenClaw and Codex.
 
@@ -6,7 +6,7 @@ Market-demand research skill for OpenClaw and Codex.
 
 ## Overview
 
-`openclaw-market-demand-research` is a standalone skill repository for repeatable market-demand research workflows.
+`claw-research` is a standalone skill repository for repeatable market-demand research workflows.
 
 It is designed for cases where an outer agent already has market-signal items such as posts, comments, complaints, issues, or clipped notes, and needs a reliable workflow to:
 
@@ -66,7 +66,7 @@ Use this skill when you need:
 ## Repository Layout
 
 ```text
-openclaw-market-demand-research/
+claw-research/
 ├── SKILL.md
 ├── README.md
 ├── README.zh-CN.md
