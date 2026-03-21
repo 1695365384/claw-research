@@ -4,6 +4,7 @@ __pycache__/
 # runtime outputs
 data/*.jsonl
 data/*.json
+!data/analysis-result.example.json
 reports/
 reports-*/
 data-cross-border/
