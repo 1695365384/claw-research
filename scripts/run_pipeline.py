@@ -17,9 +17,9 @@ USER_AGENT = "market-demand-research/1.0"
 def default_config():
     return {
         "project_name": "market-demand-research",
-        "output_dir": "./data",
-        "report_dir": "./reports",
-        "state_file": "./data/state.json",
+        "output_dir": "./workspace/data",
+        "report_dir": "./workspace/reports",
+        "state_file": "./workspace/data/state.json",
         "max_items_per_source": 20,
         "lookback_hours": 48,
         "cluster_window_hours": 168,

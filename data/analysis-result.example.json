@@ -24,6 +24,117 @@
       "summary": "Users explicitly describe losing hours every week."
     }
   ],
+  "bayesian_scores": {
+    "success_probability": {
+      "posterior": 0.32,
+      "prior": {
+        "value": 0.12,
+        "reasoning": "B2B SaaS 在电商运营工具垂直领域成功率约 12%，基于 CB Insights 和行业报告数据"
+      },
+      "confidence": "medium",
+      "signal_assessments": [
+        {
+          "dimension": "pain_intensity",
+          "strength": 0.75,
+          "reasoning": "用户使用强烈情绪词（'崩溃'、'太痛苦'），并给出具体时间损失（每天3小时）",
+          "evidence_quotes": [
+            "每天处理退款要花3小时，太崩溃了",
+            "手动退款的流程让我想放弃这个业务"
+          ],
+          "contribution": "+0.10"
+        },
+        {
+          "dimension": "market_evidence",
+          "strength": 0.60,
+          "reasoning": "5条独立证据来自不同平台（Reddit 2条、Twitter 2条、行业论坛 1条），覆盖运营和客服角色",
+          "evidence_count": 5,
+          "source_diversity": "3个平台，2个角色类型",
+          "contribution": "+0.07"
+        },
+        {
+          "dimension": "solution_gap",
+          "strength": 0.55,
+          "reasoning": "用户明确抱怨现有方案（电子表格、聊天工具），但未提及尝试过专业工具",
+          "evidence_quotes": [
+            "还在用 Excel 追踪所有退款状态",
+            "客服和运营在 Slack 里来回确认"
+          ],
+          "contribution": "+0.05"
+        },
+        {
+          "dimension": "timing_signal",
+          "strength": 0.40,
+          "reasoning": "跨境电商增长趋势明显，但未发现技术或监管变化带来的新机会",
+          "contribution": "+0.02"
+        },
+        {
+          "dimension": "execution_fit",
+          "strength": 0.30,
+          "reasoning": "缺乏创始人/团队背景信息，无法评估",
+          "contribution": "+0.00"
+        }
+      ],
+      "calculation_summary": "先验 0.12 + 信号贡献 0.24 = 后验 0.32（上限截断至 0.35）",
+      "key_uncertainties": [
+        "未验证决策者（运营总监/CEO）视角",
+        "缺乏竞品分析数据",
+        "创始人背景未知，execution_fit 维度缺失"
+      ]
+    },
+    "payment_probability": {
+      "posterior": 0.18,
+      "prior": {
+        "value": 0.06,
+        "reasoning": "B2B SaaS 在 $50-150/月 价格区间的付费转化率约 6%，基于 OpenView SaaS Benchmarks"
+      },
+      "confidence": "low",
+      "signal_assessments": [
+        {
+          "dimension": "economic_impact",
+          "strength": 0.70,
+          "reasoning": "用户量化了时间损失（每周10小时），但未量化金钱损失；提及'失去客户'但无具体金额",
+          "evidence_quotes": [
+            "每周大概浪费10小时在退款处理上",
+            "因为这个流程太慢，丢了2个客户"
+          ],
+          "contribution": "+0.08"
+        },
+        {
+          "dimension": "purchase_intent",
+          "strength": 0.35,
+          "reasoning": "有'希望有更好的工具'的表述，但无明确'正在找替代品'或'愿意付费'",
+          "evidence_quotes": [
+            "希望有更好的工作流"
+          ],
+          "contribution": "+0.03"
+        },
+        {
+          "dimension": "budget_access",
+          "strength": 0.20,
+          "reasoning": "无证据表明发言者有购买决策权或预算权限",
+          "contribution": "+0.01"
+        },
+        {
+          "dimension": "urgency",
+          "strength": 0.45,
+          "reasoning": "情绪词显示痛苦程度高，但无明确时间压力（如'月底前必须解决'）",
+          "contribution": "+0.02"
+        },
+        {
+          "dimension": "trust_signals",
+          "strength": 0.25,
+          "reasoning": "无品牌背书、推荐或口碑提及",
+          "contribution": "+0.00"
+        }
+      ],
+      "calculation_summary": "先验 0.06 + 信号贡献 0.14 = 后验 0.18（取值范围合理）",
+      "key_uncertainties": [
+        "缺乏付费意愿直接证据",
+        "发言者角色和决策权未知",
+        "无竞品价格敏感度数据"
+      ]
+    }
+  },
   "strongest_examples": [
     {
       "title": "Wish there was a better chargeback workflow",
@@ -38,6 +149,8 @@
     }
   ],
   "risks_or_gaps": [
-    "Strong pain signal, but pricing evidence is still weak."
+    "Strong pain signal, but pricing evidence is still weak.",
+    "Payment probability confidence is low - requires validation interviews.",
+    "No evidence from decision-makers (owners, VPs)."
   ]
 }

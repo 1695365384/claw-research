@@ -1,13 +1,16 @@
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
 
-# runtime outputs
-data/*.jsonl
-data/*.json
-!data/analysis-result.example.json
-reports/
-reports-*/
-data-cross-border/
+# Runtime workspace (generated files)
+workspace/
 
-# local state
-state.json
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

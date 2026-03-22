@@ -1,32 +1,65 @@
 # claw-research
 
-OpenClaw / Codex 的市场需求调研技能仓库。
+**基于贝叶斯推断的市场需求研究，为产品决策提供量化支持。**
 
 [English README](./README.md)
 
 ## 简介
 
-`claw-research` 是一个独立的技能仓库，用来承载可重复执行的市场需求调研工作流。
+`claw-research` 是一个使用**贝叶斯推断**从市场信号中估算成功概率和付费概率的技能仓库。
 
-它适合这样的场景：外层 agent 已经拿到帖子、评论、抱怨、issue、剪藏摘录等市场信号，需要一套稳定流程去：
+不同于凭直觉验证或硬编码评分系统，这个技能提供：
 
-- 标准化噪音输入
-- 用关键词规则过滤无关内容
-- 对重复证据去重
-- 生成机器可读的分析输入
-- 强制产出完整调研结果
-- 把最终结论交给 OpenClaw 和 Notion MCP
+- **动态概率估算** - 基于实际证据上下文
+- **透明推理** - 清楚看到为什么是这个概率
+- **证据支撑** - 每个评分都有原文引用
+- **明确不确定性** - 知道哪些证据缺失
 
-这个仓库只维护技能本体，不负责调度、服务编排或 LLM 提供方配置。
+## 核心功能：贝叶斯概率评分
+
+```
+P(成功|证据) = 先验概率 + Σ(信号强度 × 相关性)
+P(支付|证据) = 先验概率 + Σ(信号强度 × 相关性)
+```
+
+### 与传统评分的区别
+
+| 传统评分 | Claw Research |
+|---------|---------------|
+| 硬编码阈值（≥5条 = true） | 动态强度评估（0.0-1.0） |
+| 固定先验概率（10%） | 基于上下文估算先验 |
+| 黑盒评分 | 完整推理 + 原文引用 |
+| 不追踪不确定性 | 明确列出缺失证据 |
+
+### 输出示例
+
+```json
+{
+  “success_probability”: {
+    “posterior”: 0.32,
+    “prior”: {
+      “value”: 0.12,
+      “reasoning”: “B2B SaaS 在该垂直领域成功率约 12%”
+    },
+    “signal_assessments”: [{
+      “dimension”: “pain_intensity”,
+      “strength”: 0.75,
+      “reasoning”: “用户使用强烈情绪词并给出具体时间损失”,
+      “evidence_quotes”: [“每天处理退款要花3小时，太崩溃了”]
+    }],
+    “key_uncertainties”: [“未验证决策者视角”]
+  }
+}
+```
 
 ## 适用场景
 
 适合在以下情况下使用：
 
-- 针对某类人群或某条工作流做重复市场扫描
-- 在做产品验证前先整理出本地证据包
-- 希望用比“随手搜索”更严格的调研流程
-- 希望在“收集 -> 分析 -> Notion 同步”之间建立稳定交付协议
+- **数据驱动的做/不做决策** - 量化概率代替直觉
+- **透明的验证过程** - 利益相关者可以看到推理过程
+- **证据追踪** - 每个评估都有原文支撑
+- **不确定性意识** - 动手前知道哪些信息缺失
 
 ## 工作流
 
@@ -67,15 +100,16 @@ OpenClaw / Codex 的市场需求调研技能仓库。
 
 ```text
 claw-research/
-├── SKILL.md
-├── README.md
-├── README.zh-CN.md
+├── SKILL.md                    # 技能定义
+├── README.md                   # 英文文档
+├── README.zh-CN.md             # 中文文档
 ├── LICENSE
 ├── requirements.txt
+├── .gitignore
 ├── data/
-│   └── analysis-result.example.json
+│   └── analysis-result.example.json  # 示例输出结构
 ├── input/
-│   └── example-items.jsonl
+│   └── example-items.jsonl           # 示例输入
 ├── references/
 │   ├── analysis-result-schema.md
 │   ├── input-config.md
@@ -87,6 +121,20 @@ claw-research/
 │   └── run_pipeline.py
 └── tests/
     └── test_run_pipeline.py
+
+# 运行时工作空间（不提交到 git）
+workspace/
+├── data/
+│   ├── raw.jsonl
+│   ├── candidate_items.jsonl
+│   ├── analysis_input.json
+│   ├── analysis-result.json
+│   ├── run_metrics.json
+│   └── state.json
+├── input/
+│   └── *.jsonl              # 用户输入数据
+└── reports/
+    └── *.md                 # 生成的报告
 ```
 
 ## 输入

@@ -1,32 +1,65 @@
 # claw-research
 
-Market-demand research skill for OpenClaw and Codex.
+**Bayesian-powered market demand research for product validation.**
 
 [中文说明](./README.zh-CN.md)
 
 ## Overview
 
-`claw-research` is a standalone skill repository for repeatable market-demand research workflows.
+`claw-research` is a standalone skill that uses **Bayesian inference** to estimate success and payment probabilities from market signals.
 
-It is designed for cases where an outer agent already has market-signal items such as posts, comments, complaints, issues, or clipped notes, and needs a reliable workflow to:
+Unlike gut-feeling validation or hardcoded scoring systems, this skill provides:
 
-- normalize noisy inputs
-- filter irrelevant items with keyword rules
-- dedupe repeated evidence
-- prepare machine-readable analysis inputs
-- enforce required research outputs
-- hand final conclusions to OpenClaw and Notion MCP
+- **Dynamic probability estimation** based on actual evidence context
+- **Transparent reasoning** - see exactly why the probability is what it is
+- **Evidence-backed assessments** - every score includes source quotes
+- **Explicit uncertainties** - know what evidence is missing
 
-This repository maintains the skill itself only. It does not own scheduling, service orchestration, or LLM provider configuration.
+## Core Feature: Bayesian Probability Scoring
+
+```
+P(成功|证据) = 先验概率 + Σ(信号强度 × 相关性)
+P(支付|证据) = 先验概率 + Σ(信号强度 × 相关性)
+```
+
+### What Makes It Different
+
+| Traditional Scoring | Claw Research |
+|---------------------|---------------|
+| Hardcoded thresholds (≥5 items = true) | Dynamic strength assessment (0.0-1.0) |
+| Fixed prior probability (10%) | Context-aware prior estimation |
+| Black box scores | Full reasoning with evidence quotes |
+| No uncertainty tracking | Explicit list of missing evidence |
+
+### Example Output
+
+```json
+{
+  "success_probability": {
+    "posterior": 0.32,
+    "prior": {
+      "value": 0.12,
+      "reasoning": "B2B SaaS in this vertical has ~12% success rate"
+    },
+    "signal_assessments": [{
+      "dimension": "pain_intensity",
+      "strength": 0.75,
+      "reasoning": "Users use strong emotional words with specific time loss",
+      "evidence_quotes": ["Processing refunds takes 3 hours every day, it's crushing me"]
+    }],
+    "key_uncertainties": ["No decision-maker perspective validated"]
+  }
+}
+```
 
 ## Use Cases
 
 Use this skill when you need:
 
-- repeatable market scans for a specific persona or workflow
-- a local evidence package before doing product validation
-- a stricter research workflow than ad hoc browsing
-- a handoff contract between collection, analysis, and Notion sync
+- **Data-driven go/no-go decisions** - Quantified probability instead of gut feeling
+- **Transparent validation** - Stakeholders can see the reasoning
+- **Evidence tracking** - Every assessment backed by source quotes
+- **Uncertainty awareness** - Know what you don't know before building
 
 ## Workflow
 
@@ -67,15 +100,16 @@ Use this skill when you need:
 
 ```text
 claw-research/
-├── SKILL.md
-├── README.md
-├── README.zh-CN.md
+├── SKILL.md                    # Skill definition
+├── README.md                   # English docs
+├── README.zh-CN.md             # Chinese docs
 ├── LICENSE
 ├── requirements.txt
+├── .gitignore
 ├── data/
-│   └── analysis-result.example.json
+│   └── analysis-result.example.json  # Example output schema
 ├── input/
-│   └── example-items.jsonl
+│   └── example-items.jsonl           # Example input
 ├── references/
 │   ├── analysis-result-schema.md
 │   ├── input-config.md
@@ -87,6 +121,20 @@ claw-research/
 │   └── run_pipeline.py
 └── tests/
     └── test_run_pipeline.py
+
+# Runtime workspace (not tracked in git)
+workspace/
+├── data/
+│   ├── raw.jsonl
+│   ├── candidate_items.jsonl
+│   ├── analysis_input.json
+│   ├── analysis-result.json
+│   ├── run_metrics.json
+│   └── state.json
+├── input/
+│   └── *.jsonl              # User input data
+└── reports/
+    └── *.md                 # Generated reports
 ```
 
 ## Inputs

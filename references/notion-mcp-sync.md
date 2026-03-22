@@ -2,7 +2,7 @@
 
 Default behavior after a research run:
 
-1. Produce `data/analysis-result.json`
+1. Produce `workspace/data/analysis-result.json`
 2. Create or update one Notion page for the run
 3. Use the standard page layout below unless the user explicitly asks for a different format
 4. Use the current runtime date for the page title and any generated timestamps
@@ -11,10 +11,10 @@ This skill does not write to Notion directly at the script layer.
 
 Instead, it emits:
 
-- `reports/YYYY-MM-DD.md`
-- `reports/weekly-YYYY-WW.md`
-- `data/analysis_input.json`
-- `data/analysis-result.json`
+- `workspace/reports/YYYY-MM-DD.md`
+- `workspace/reports/weekly-YYYY-WW.md`
+- `workspace/data/analysis_input.json`
+- `workspace/data/analysis-result.json`
 
 An external agent can read those local artifacts and sync them to Notion through Notion MCP.
 
@@ -34,17 +34,17 @@ Use one page per run or one database row per run. Store:
 Write the page in this order:
 
 1. A short callout with the top conclusion
-2. A `当前最值得做的 1 个切口` section
-3. A `调研概览` section
-4. A `优先级矩阵` section
-5. A `核心结论` section
+2. A `Top Opportunity` section
+3. A `Research Overview` section
+4. A `Priority Matrix` section
+5. A `Key Findings` section
 6. A `Top Pain Points` section
-7. A `候选产品切口` section
+7. A `Candidate Opportunities` section
 8. A `Payment Signals` section
 9. A `Strongest Examples` section
-10. A `下一轮访谈对象` section
-11. A `风险与证据缺口` section
-12. A `建议的下一步` section
+10. A `Next Interview Targets` section
+11. A `Risks & Evidence Gaps` section
+12. A `Recommended Next Steps` section
 
 When possible:
 
@@ -57,7 +57,7 @@ When possible:
 ## Recommended MCP Flow
 
 1. Read the latest report and analysis inputs
-2. Let OpenClaw produce `data/analysis-result.json`
+2. Let OpenClaw produce `workspace/data/analysis-result.json`
 3. Create or update a Notion page for the current run
 4. Write:
    - a summary section
@@ -71,16 +71,16 @@ When possible:
 
 If Notion MCP is unavailable, unreachable, or fails:
 
-1. Keep `data/analysis-result.json` as the source of truth
+1. Keep `workspace/data/analysis-result.json` as the source of truth
 2. Do not silently skip the sync step
-3. State explicitly in the final response: `本次未同步`
+3. State explicitly in the final response: `SYNC_SKIPPED`
 4. Briefly explain whether the issue was tool availability, permission, or write failure
 
 ## Naming Convention
 
 Use a page title in this pattern unless the user asks otherwise:
 
-- `{research topic}调研 - YYYY-MM-DD`
+- `{research topic} Research - YYYY-MM-DD`
 
 Always substitute `YYYY-MM-DD` with the current local date at runtime. Do not copy dates from examples.
 
