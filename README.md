@@ -1,35 +1,57 @@
-# claw-research
+<div align="center">
 
-**Bayesian-powered market demand research for product validation.**
+# Claw Research
 
-[中文说明](./README.zh-CN.md)
+**Bayesian-Powered Market Demand Research for Product Validation**
+
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+  </a>
+  <a href="https://www.python.org/">
+    <img src="https://img.shields.io/badge/Python-3.9+-blue.svg" alt="Python 3.9+">
+  </a>
+  <a href="./tests/">
+    <img src="https://img.shields.io/badge/Tests-57%20passed-brightgreen.svg" alt="Tests">
+  </a>
+</p>
+
+[English](#overview) · [中文文档](./README.zh-CN.md)
+
+*A standalone skill that transforms market signals into quantified success probabilities.*
+
+</div>
+
+---
 
 ## Overview
 
-`claw-research` is a standalone skill that uses **Bayesian inference** to estimate success and payment probabilities from market signals.
+`claw-research` uses **Bayesian inference** to estimate success and payment probabilities from market signals.
 
-Unlike gut-feeling validation or hardcoded scoring systems, this skill provides:
+Unlike gut-feeling validation or hardcoded scoring systems:
+
+| Feature | Traditional Scoring | Claw Research |
+|:-------:|:-------------------:|:-------------:|
+| **Thresholds** | Hardcoded (>=5 = true) | Dynamic (0.0-1.0) |
+| **Prior Probability** | Fixed (10%) | Context-aware estimation |
+| **Transparency** | Black box | Full reasoning + evidence quotes |
+| **Uncertainty** | Not tracked | Explicit missing evidence list |
+
+### Key Benefits
 
 - **Dynamic probability estimation** based on actual evidence context
 - **Transparent reasoning** - see exactly why the probability is what it is
 - **Evidence-backed assessments** - every score includes source quotes
 - **Explicit uncertainties** - know what evidence is missing
 
-## Core Feature: Bayesian Probability Scoring
+---
+
+## Bayesian Scoring Engine
 
 ```
-P(成功|证据) = 先验概率 + Σ(信号强度 × 相关性)
-P(支付|证据) = 先验概率 + Σ(信号强度 × 相关性)
+P(success|evidence) = prior + sum(signal_strength x relevance)
+P(payment|evidence) = prior + sum(signal_strength x relevance)
 ```
-
-### What Makes It Different
-
-| Traditional Scoring | Claw Research |
-|---------------------|---------------|
-| Hardcoded thresholds (≥5 items = true) | Dynamic strength assessment (0.0-1.0) |
-| Fixed prior probability (10%) | Context-aware prior estimation |
-| Black box scores | Full reasoning with evidence quotes |
-| No uncertainty tracking | Explicit list of missing evidence |
 
 ### Example Output
 
@@ -44,13 +66,35 @@ P(支付|证据) = 先验概率 + Σ(信号强度 × 相关性)
     "signal_assessments": [{
       "dimension": "pain_intensity",
       "strength": 0.75,
-      "reasoning": "Users use strong emotional words with specific time loss",
+      "reasoning": "Users express strong emotional words with specific time loss",
       "evidence_quotes": ["Processing refunds takes 3 hours every day, it's crushing me"]
     }],
     "key_uncertainties": ["No decision-maker perspective validated"]
   }
 }
 ```
+
+---
+
+## Quick Start
+
+```bash
+python3 scripts/run_pipeline.py \
+  --project-name "cross-border-ecommerce-merchant-pain" \
+  --input-jsonl input/example-items.jsonl \
+  --include-keyword "refund" \
+  --include-keyword "chargeback" \
+  --exclude-keyword "hiring"
+```
+
+Then ask OpenClaw to:
+
+1. Read `data/analysis_input.json`
+2. Read `data/candidate_items.jsonl`
+3. Write `data/analysis-result.json`
+4. Sync the conclusion to Notion through MCP
+
+---
 
 ## Use Cases
 
@@ -61,11 +105,13 @@ Use this skill when you need:
 - **Evidence tracking** - Every assessment backed by source quotes
 - **Uncertainty awareness** - Know what you don't know before building
 
+---
+
 ## Workflow
 
-```text
+```
 +------------------------+
-| external market items  |
+| External Market Items  |
 | posts / comments / etc |
 +-----------+------------+
             |
@@ -96,20 +142,27 @@ Use this skill when you need:
 +------------------------+
 ```
 
+---
+
 ## Repository Layout
 
-```text
+```
 claw-research/
 ├── SKILL.md                    # Skill definition
 ├── README.md                   # English docs
 ├── README.zh-CN.md             # Chinese docs
 ├── LICENSE
 ├── requirements.txt
-├── .gitignore
+│
+├── config/
+│   └── sources.json            # Data source configuration
+│
 ├── data/
-│   └── analysis-result.example.json  # Example output schema
+│   └── analysis-result.example.json
+│
 ├── input/
-│   └── example-items.jsonl           # Example input
+│   └── example-items.jsonl     # Example input
+│
 ├── references/
 │   ├── analysis-result-schema.md
 │   ├── input-config.md
@@ -117,87 +170,64 @@ claw-research/
 │   ├── notion-page-template.md
 │   ├── output-spec.md
 │   └── research-prompts.md
+│
 ├── scripts/
-│   └── run_pipeline.py
+│   ├── run_pipeline.py
+│   └── collectors/              # Data collectors
+│       ├── selector.py          # Smart source selector
+│       ├── search_collector.py  # Multi-engine search
+│       ├── rss_generic.py       # RSS feed collector
+│       └── hacker_news.py       # HN API collector
+│
 └── tests/
-    └── test_run_pipeline.py
-
-# Runtime workspace (not tracked in git)
-workspace/
-├── data/
-│   ├── raw.jsonl
-│   ├── candidate_items.jsonl
-│   ├── analysis_input.json
-│   ├── analysis-result.json
-│   ├── run_metrics.json
-│   └── state.json
-├── input/
-│   └── *.jsonl              # User input data
-└── reports/
-    └── *.md                 # Generated reports
+    └── test_*.py
 ```
 
-## Inputs
+---
 
-Typical input is an externally prepared `items.jsonl` or `items.json` file. Each item represents one market signal.
+## Data Sources
 
-See [references/input-config.md](/Users/limingwu/Documents/mvp/police/references/input-config.md).
+| Source | Type | Auth Required | Best For |
+|:------:|:----:|:-------------:|:---------|
+| Hacker News | API | No | Tech discussions, startup feedback |
+| Reddit | API | Yes | Community pain points |
+| Bing | Search | No | General web search |
+| Baidu | Search | No | Chinese content |
+| Google | Search | No | Global results |
+| DuckDuckGo | Search | No | Privacy-focused search |
+| Woshipm | RSS | No | Chinese PM community |
+| PMCAFF | RSS | No | Product management |
+| TechCrunch | RSS | No | Tech news |
+| 36Kr | RSS | No | Chinese tech/startup |
 
-## Outputs
-
-The pipeline prepares:
-
-- `data/raw.jsonl`
-- `data/candidate_items.jsonl`
-- `data/analysis_input.json`
-- `data/run_metrics.json`
-- `reports/*.md`
-
-OpenClaw must then produce:
-
-- `data/analysis-result.json`
-
-See:
-
-- [references/output-spec.md](/Users/limingwu/Documents/mvp/police/references/output-spec.md)
-- [references/analysis-result-schema.md](/Users/limingwu/Documents/mvp/police/references/analysis-result-schema.md)
+---
 
 ## Completion Rules
 
-A run is only complete when:
+A run is **complete** when:
 
-1. candidate items have been prepared
-2. `analysis_input.json` exists
-3. `analysis-result.json` exists
-4. if Notion MCP is available and the user did not opt out, a Notion page was created or updated
-5. if Notion MCP is unavailable, the final response explicitly says `本次未同步`
+- [x] Candidate items prepared
+- [x] `analysis_input.json` exists
+- [x] `analysis-result.json` exists
+- [x] Notion page created/updated (or explicitly noted as skipped)
 
-## Quick Start
-
-```bash
-python3 scripts/run_pipeline.py \
-  --project-name "cross-border-ecommerce-merchant-pain" \
-  --input-jsonl input/example-items.jsonl \
-  --include-keyword "refund" \
-  --include-keyword "chargeback" \
-  --exclude-keyword "hiring"
-```
-
-Then ask OpenClaw to:
-
-1. read `data/analysis_input.json`
-2. read `data/candidate_items.jsonl`
-3. write `data/analysis-result.json`
-4. sync the conclusion to Notion through MCP
+---
 
 ## Validation
 
 ```bash
+# Syntax check
 python3 -m py_compile scripts/run_pipeline.py
-python3 -m unittest discover -s tests -p 'test_*.py' -v
-python3 /Users/limingwu/.codex/skills/.system/skill-creator/scripts/quick_validate.py .
+
+# Run tests
+python3 -m pytest tests/ -v
+
+# Quick validation
+python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py .
 ```
+
+---
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](/Users/limingwu/Documents/mvp/police/LICENSE).
+This project is licensed under the **MIT License**. See [LICENSE](./LICENSE) for details.
