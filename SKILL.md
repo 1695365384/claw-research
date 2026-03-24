@@ -175,6 +175,123 @@ All paths relative to `workspace/projects/{project_name}/`:
 
 ---
 
+## MANDATORY: Final Report Output
+
+After completing analysis, you **MUST** output a complete report to the user following this structure:
+
+### Report Template
+
+```markdown
+# [Project Name] Market Research Report
+**Generated**: YYYY-MM-DD HH:mm UTC
+**Data Sources**: X candidate signals
+**Confidence**: high/medium/low
+
+---
+
+## Executive Summary
+
+**Core Conclusion**: [One sentence summary]
+
+**Recommended Actions**:
+1. [P0] First action
+2. [P1] Second action
+3. [P2] Third action
+
+**Risk Alert**: [Top 2 risks]
+
+---
+
+## Bayesian Scores
+
+### Success Probability: XX%
+- Prior: XX% ([reasoning])
+- Signals: [list contributions]
+- Key Uncertainties: [list]
+
+### Payment Probability: XX%
+- Prior: XX% ([reasoning])
+- Signals: [list contributions]
+- Key Uncertainties: [list]
+
+---
+
+## Key Pain Points
+
+### Pain Point 1: [Title] (X evidence)
+
+> **Original**: "[Full quote]"
+> **Source**: [Name](URL)
+> **Type**: community_discussion
+> **Date**: YYYY-MM-DD
+
+[Repeat for each pain point]
+
+---
+
+## Strategic Analysis
+
+### SWOT
+- **Strengths**: [with evidence]
+- **Weaknesses**: [with evidence]
+- **Opportunities**: [with evidence]
+- **Threats**: [with evidence]
+
+### Competitors
+| Name | Positioning | Gap | Our Advantage |
+|------|-------------|-----|---------------|
+| ... | ... | ... | ... |
+
+---
+
+## Action Items
+
+- [ ] **ACTION-001**: [Task] (Due: YYYY-MM-DD)
+- [ ] **ACTION-002**: [Task] (Due: YYYY-MM-DD)
+
+---
+
+## Notion Sync Status
+
+[ ] Synced to Notion: [Page URL]
+OR
+[ ] SYNC_SKIPPED: [reason]
+```
+
+### Evidence Block Format (MANDATORY)
+
+Every evidence MUST include:
+1. **Full original text** - No truncation
+2. **Clickable source URL** - Not just domain
+3. **Source type** - community_discussion, blog_article, etc.
+4. **Publication date** - For context
+
+### Example Evidence Block
+
+```markdown
+> **Original**: "As a PM, I spend 6+ hours in meetings daily. By the time I get to actual work, my brain is fried."
+>
+> **Source**: [Reddit r/ProductManagement](https://reddit.com/r/ProductManagement/comments/abc123)
+> **Type**: community_discussion
+> **Date**: 2026-03-20
+```
+
+### DO NOT
+
+- Output only JSON file path without showing report
+- Truncate evidence text
+- Skip source URLs
+- Use placeholder text like "see analysis-result.json"
+
+### ALWAYS
+
+- Output complete report in Markdown format
+- Include all evidence quotes with sources
+- Show Bayesian calculation process
+- State Notion sync status explicitly
+
+---
+
 ## File Structure
 
 ```
