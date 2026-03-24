@@ -1,15 +1,16 @@
 # Prompt Design
 
-The workflow now stops at candidate preparation. OpenClaw should read:
+The workflow now stops at candidate preparation. OpenClaw should read from `workspace/projects/{project_name}/`:
 
-- `workspace/data/analysis_input.json`
-- `workspace/data/candidate_items.jsonl`
+- `data/analysis_input.json`
+- `data/candidate_items.jsonl`
+- `config/research-charter.json` (if exists)
 
 Then run its own analysis.
 
 Write the final structured result to:
 
-- `workspace/data/analysis-result.json`
+- `data/analysis-result.json`
 
 Use the current runtime UTC timestamp for `generated_at`. Do not copy dates from examples.
 
@@ -24,6 +25,13 @@ Ask OpenClaw to produce:
 - candidate clusters
 - **Bayesian probability scores** (success and payment likelihood)
 - next interview targets
+- **Hypothesis validation** (if charter exists)
+- **Strategic analysis** (SWOT, competitors, user journey)
+- **Actionable insights** with evidence basis
+- **Market sizing** (TAM/SAM)
+- **Action items** for next steps
+
+---
 
 ## Bayesian Scoring Instructions (Dynamic Evaluation)
 
@@ -84,33 +92,218 @@ posterior = prior + Σ(dimension_contributions)
 3. **Acknowledge uncertainty**: Clearly point out missing evidence
 4. **Avoid overconfidence**: Lower confidence when evidence is insufficient
 
+---
+
+## Hypothesis-Driven Analysis
+
+If a `research_charter` is provided in the analysis input, validate each hypothesis:
+
+### Hypothesis Validation Process
+
+1. **Read** the `research_charter` from `analysis_input.json`
+2. **For each hypothesis** in `research_questions`:
+   - Search for supporting or contradicting evidence in candidate items
+   - Assess evidence quality (quantity, diversity, consistency)
+   - Determine validation status:
+     - `validated`: Strong supporting evidence from multiple sources
+     - `partially_validated`: Some supporting evidence, but gaps remain
+     - `not_validated`: Insufficient evidence to conclude
+     - `refuted`: Evidence contradicts hypothesis
+3. **Output hypothesis validation matrix** in `hypothesis_validation` field
+
+### Hypothesis Validation Output Structure
+
+```json
+{
+  "hypothesis_validation": [
+    {
+      "hypothesis_id": "RQ1",
+      "hypothesis": "Sellers with >100 monthly orders struggle with manual refund tracking",
+      "status": "validated",
+      "supporting_evidence": [
+        "12 independent mentions of manual refund tracking",
+        "8 users explicitly mention spending 2+ hours weekly on refunds"
+      ],
+      "missing_evidence": [
+        "Need interviews with operations leads",
+        "Decision maker perspective missing"
+      ],
+      "confidence": "medium",
+      "next_steps": "Interview 3-5 operations leads to validate decision process"
+    }
+  ]
+}
+```
+
+---
+
+## Strategic Analysis Framework
+
+In addition to Bayesian scoring, provide multi-dimensional business analysis:
+
+### SWOT Analysis
+
+- **Strengths**: Internal advantages, strong signals, unique capabilities
+- **Weaknesses**: Internal limitations, evidence gaps, competitive disadvantages
+- **Opportunities**: Market trends, unmet needs, favorable conditions
+- **Threats**: Competitive risks, market changes, potential obstacles
+
+Each dimension MUST include at least 2 evidence quotes with reasoning.
+
+### Competitor Landscape
+
+Identify 2-5 direct/indirect competitors. For each competitor, analyze:
+- **name**: Competitor name
+- **positioning**: How they position themselves
+- **price_range**: Pricing model (e.g., "$50-450/month")
+- **gap**: What they don't solve well
+- **our_advantage**: How your solution could be better
+
+### User Journey Analysis
+
+Map pain points across the user journey stages. For each stage:
+- **stage**: Stage name (e.g., "Discover problem", "Evaluate options", "Implement solution")
+- **pain_level**: high | medium | low
+- **current_solutions**: What users do now
+- **evidence_count**: Number of supporting evidence items
+- **key_activities**: What users actually do at this stage
+
+---
+
+## Actionable Insights Framework
+
+Extract evidence-based, actionable recommendations from the analysis.
+
+### Insight Structure
+
+```json
+{
+  "actionable_insights": [
+    {
+      "insight": "Refund workflow automation is the most promising opportunity",
+      "evidence_basis": [
+        "12 independent pain mentions",
+        "Bayesian success probability: 0.35",
+        "3 users explicitly mentioned willingness to pay"
+      ],
+      "recommended_action": "Develop MVP focused on refund workflow automation",
+      "expected_impact": "high",
+      "confidence": "medium",
+      "priority": "P0",
+      "next_steps": [
+        "Interview 5 high-volume sellers to validate payment willingness",
+        "Research competitor pricing in refund automation space"
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## Market Sizing Framework
+
+Provide TAM (Total Addressable Market) and SAM (Serviceable Addressable Market) estimates.
+
+### Sizing Structure
+
+```json
+{
+  "market_sizing": {
+    "tam_estimate": {
+      "value": "$XX million",
+      "reasoning": "Calculation logic and data sources",
+      "confidence": "low | medium | high"
+    },
+    "sam_estimate": {
+      "value": "$XX million",
+      "reasoning": "Calculation logic and data sources",
+      "confidence": "low | medium | high"
+    }
+  }
+}
+```
+
+---
+
+## Action Items Framework
+
+Generate specific next steps based on the analysis.
+
+### Action Item Structure
+
+```json
+{
+  "action_items": [
+    {
+      "id": "ACTION-001",
+      "action": "Interview 5 high-volume Shopify sellers",
+      "due_date": "YYYY-MM-DD",
+      "owner": "user",
+      "status": "pending",
+      "linked_insight": "High-volume sellers show strongest pain and payment signals",
+      "validation_criteria": "At least 3 sellers confirm willingness to pay $50-100/month"
+    }
+  ]
+}
+```
+
+---
+
 ## Suggested Prompt
 
 ```text
-Read workspace/data/analysis_input.json and workspace/data/candidate_items.jsonl.
+Read workspace/projects/{project_name}/data/analysis_input.json and workspace/projects/{project_name}/data/candidate_items.jsonl.
+If research_charter exists in analysis_input.json, use it for hypothesis-driven analysis.
 
-Identify repeated pain points, scenarios, workarounds, and payment signals.
-Group the candidate items into opportunity clusters.
-Calculate Bayesian probability scores for success and payment likelihood.
+## Analysis Tasks
 
-**Bayesian Analysis**:
-- Use prior P(success)=0.10, P(payment)=0.05
-- Detect signals from the text (time loss, revenue loss, switching intent, etc.)
-- Calculate posterior probabilities using likelihood ratios from the schema
-- Assign confidence based on signal strength and consistency
+1. **Pain Point Analysis**
+   - Identify repeated pain points with evidence counts
+   - Group into opportunity clusters
+   - Note current workarounds
 
-Be strict about evidence quality and do not invent unsupported conclusions.
+2. **Payment Signal Detection**
+   - Find explicit willingness-to-pay signals
+   - Identify time/money loss quantification
+   - Note budget authority signals
+
+3. **Bayesian Probability Scoring**
+   - Estimate prior based on industry/market context
+   - Assess each dimension with evidence quotes
+   - Calculate posterior with uncertainty
+
+4. **Hypothesis Validation** (if charter exists)
+   - Validate each hypothesis from research_charter
+   - Determine status: validated/partially_validated/not_validated/refuted
+   - List supporting and missing evidence
+
+5. **Strategic Analysis**
+   - SWOT: Each dimension with 2+ evidence quotes
+   - Competitor landscape: 2-5 competitors with gaps
+   - User journey: Map pain across stages
+
+6. **Synthesis**
+   - Extract 3-5 actionable insights with evidence basis
+   - Estimate TAM/SAM with reasoning
+   - Generate action items for next steps
+
+Be strict about evidence quality. Do not invent unsupported conclusions.
 Only mark signals as observed if there is clear textual evidence.
 
-Return:
-1. Top pain points
-2. Candidate clusters
-3. Payment signals
-4. Bayesian scores (success_probability and payment_probability)
-5. Most useful source examples
-6. Next interview targets
-7. Risks or evidence gaps
-
 Write the answer as JSON following `references/analysis-result-schema.md`.
-If Notion MCP is unavailable or the sync fails, state explicitly in the final reply: `SYNC_SKIPPED`.
+If Notion MCP is unavailable or the sync fails, state explicitly: `SYNC_SKIPPED`.
 ```
+
+---
+
+## Analysis Process Summary
+
+1. Read research charter (if available)
+2. Perform Bayesian probability analysis
+3. Validate hypotheses against evidence
+4. Generate strategic analysis (SWOT, competitors, user journey)
+5. Extract actionable insights with evidence basis
+6. Estimate market sizing (TAM/SAM)
+7. Generate action items for next steps
+8. Output comprehensive analysis following schema

@@ -10,6 +10,18 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
+# Import collectors
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from collectors import (
+    CollectorRegistry,
+    HackerNewsCollector,
+    HackerNewsCommentsCollector,
+    RSSCollector,
+    SearchCollector,
+    load_source_configs,
+    load_api_keys,
+)
+
 
 USER_AGENT = "market-demand-research/1.0"
 
@@ -17,9 +29,10 @@ USER_AGENT = "market-demand-research/1.0"
 def default_config():
     return {
         "project_name": "market-demand-research",
-        "output_dir": "./workspace/data",
-        "report_dir": "./workspace/reports",
-        "state_file": "./workspace/data/state.json",
+        "output_dir": "./data",
+        "report_dir": "./reports",
+        "state_file": "./data/state.json",
+        "charter_file": "./config/research-charter.json",
         "max_items_per_source": 20,
         "lookback_hours": 48,
         "cluster_window_hours": 168,
@@ -34,6 +47,23 @@ def default_config():
         },
         "sources": [],
     }
+
+
+def setup_registry():
+    """Set up collector registry with all available collectors."""
+    registry = CollectorRegistry()
+    registry.register("api", HackerNewsCollector)
+    registry.register("rss", RSSCollector)
+    registry.register("search", SearchCollector)
+    return registry
+
+
+def load_research_charter(charter_path):
+    """Load research charter if exists, return None otherwise."""
+    if not charter_path or not os.path.exists(charter_path):
+        return None
+    with open(charter_path, "r", encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def utc_now():
@@ -194,63 +224,81 @@ def load_external_items(path, fallback_source, max_items):
     return [normalize_external_item(item, fallback_source) for item in raw_rows[:max_items]]
 
 
-def collect_items(config, input_jsonl=None):
+def collect_items(config, registry, source_configs, api_keys):
+    """
+    Collect items from configured sources in config/sources.json.
+
+    Args:
+        config: Pipeline configuration dict
+        registry: CollectorRegistry instance
+        source_configs: Dict of SourceConfig objects from config/sources.json
+        api_keys: Dict of API keys from config/keys.json
+
+    Returns:
+        Tuple of (items, source_stats)
+    """
     rows = []
     max_items = config.get("max_items_per_source", 20)
-    input_config = config.get("input", {})
-    input_mode = input_config.get("mode", "external_file")
     source_stats = {}
-    if input_jsonl:
-        fetched = load_external_items(input_jsonl, "external_input", max_items)
-        source_stats["external_input"] = {
-            "type": "external_file",
-            "fetched": len(fetched),
-            "failed": False,
-            "error": "",
-        }
-        return fetched, source_stats
-    if input_mode == "external_file":
-        path = input_config.get("path", "").strip()
-        if not path:
-            raise RuntimeError("input.path is required when input.mode=external_file")
-        fetched = load_external_items(path, input_config.get("name", "external_input"), max_items)
-        source_stats[input_config.get("name", "external_input")] = {
-            "type": "external_file",
-            "fetched": len(fetched),
-            "failed": False,
-            "error": "",
-        }
-        return fetched, source_stats
-    if input_mode != "builtin_sources":
-        raise RuntimeError(f"unsupported input.mode: {input_mode}")
-    for source in config.get("sources", []):
-        stype = source["type"]
-        source_stats[source["name"]] = {
-            "type": stype,
+
+    query = config.get("query", config.get("project_name", ""))
+    enabled_sources = config.get("sources", [])
+
+    if not enabled_sources:
+        print("⚠️ No sources configured. Add sources in config/sources.json", file=sys.stderr)
+        return rows, source_stats
+
+    for source_name in enabled_sources:
+        source_config = source_configs.get(source_name)
+        if not source_config:
+            print(f"skip unknown source: {source_name}", file=sys.stderr)
+            continue
+
+        if not source_config.enabled:
+            continue
+
+        source_stats[source_name] = {
+            "type": source_config.type,
             "fetched": 0,
             "failed": False,
             "error": "",
         }
+
         try:
-            if stype in {"rss", "reddit_rss"}:
-                fetched = parse_rss(source["url"], source["name"], max_items)
-            elif stype == "hn_algolia":
-                fetched = fetch_hn_algolia(source["query"], source["name"], max_items)
+            collector = registry.create(source_config.type, source_config, api_keys)
+            if not collector:
+                print(f"skip unsupported source type: {source_config.type}", file=sys.stderr)
+                continue
+
+            if not collector.is_available():
+                msg = collector.get_missing_auth_message()
+                print(f"skip source {source_name}: {msg}", file=sys.stderr)
+                source_stats[source_name]["failed"] = True
+                source_stats[source_name]["error"] = msg or "Authentication required"
+                continue
+
+            result = collector.collect(query, max_items)
+
+            if result.error:
+                source_stats[source_name]["failed"] = True
+                source_stats[source_name]["error"] = result.error
+                print(f"source {source_name} failed: {result.error}", file=sys.stderr)
             else:
-                print(f"skip unsupported source type: {stype}", file=sys.stderr)
-                fetched = []
-            rows.extend(fetched)
-            source_stats[source["name"]]["fetched"] = len(fetched)
+                for item in result.items:
+                    rows.append(normalize_external_item(item, source_name))
+                source_stats[source_name]["fetched"] = len(result.items)
+
         except Exception as exc:
-            print(f"source failed: {source['name']}: {exc}", file=sys.stderr)
-            source_stats[source["name"]]["failed"] = True
-            source_stats[source["name"]]["error"] = str(exc)
+            print(f"source failed: {source_name}: {exc}", file=sys.stderr)
+            source_stats[source_name]["failed"] = True
+            source_stats[source_name]["error"] = str(exc)
+
     return rows, source_stats
 
 
-def build_analysis_brief(config, items, filter_stats, source_stats):
+def build_analysis_brief(config, items, filter_stats, source_stats, charter=None):
     top_titles = [item.get("title", "") for item in items[:20]]
-    return {
+    brief = {
         "generated_at": now_iso(),
         "project_name": config.get("project_name", ""),
         "instructions": {
@@ -262,6 +310,10 @@ def build_analysis_brief(config, items, filter_stats, source_stats):
                 "payment signals",
                 "candidate clusters",
                 "next interview targets",
+                "bayesian probability scores",
+                "strategic analysis (SWOT, competitor landscape, user journey)",
+                "actionable insights with evidence basis",
+                "hypothesis validation results",
             ],
         },
         "source_stats": source_stats,
@@ -269,6 +321,9 @@ def build_analysis_brief(config, items, filter_stats, source_stats):
         "item_count": len(items),
         "top_titles": top_titles,
     }
+    if charter:
+        brief["research_charter"] = charter
+    return brief
 
 
 def filter_and_dedupe(config, state, items):
@@ -381,19 +436,29 @@ def build_report(config, items, path):
         fh.write("\n".join(lines))
 
 
+def sanitize_project_name(name):
+    """Convert a string to a safe project directory name."""
+    if not name:
+        return "untitled-project"
+    # Replace spaces and special chars with hyphens
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "-", name.strip().lower())
+    # Remove consecutive hyphens
+    safe = re.sub(r"-+", "-", safe)
+    # Remove leading/trailing hyphens
+    safe = safe.strip("-")
+    return safe or "untitled-project"
+
+
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config")
-    parser.add_argument("--input-jsonl")
-    parser.add_argument("--project-name")
-    parser.add_argument("--output-dir")
-    parser.add_argument("--report-dir")
-    parser.add_argument("--state-file")
-    parser.add_argument("--lookback-hours", type=int)
-    parser.add_argument("--cluster-window-hours", type=int)
-    parser.add_argument("--max-items-per-source", type=int)
-    parser.add_argument("--include-keyword", action="append", default=[])
-    parser.add_argument("--exclude-keyword", action="append", default=[])
+    parser = argparse.ArgumentParser(description="Claw Research Pipeline - Market Research Automation")
+    parser.add_argument("--project-name", required=True, help="Unique identifier for this research project")
+    parser.add_argument("--sources", help="Comma-separated list of data sources to use (default: all enabled in config/sources.json)")
+    parser.add_argument("--query", required=True, help="Search query for data collection")
+    parser.add_argument("--workspace", help="Project workspace directory (default: workspace/projects/{project_name}/)")
+    parser.add_argument("--lookback-hours", type=int, default=720, help="Only include items from the last N hours (default: 720, 30 days)")
+    parser.add_argument("--max-items-per-source", type=int, default=20, help="Maximum items per source")
+    parser.add_argument("--include-keyword", action="append", default=[], help="Only include items containing this keyword")
+    parser.add_argument("--exclude-keyword", action="append", default=[], help="Exclude items containing this keyword")
     args = parser.parse_args()
 
     config = default_config()
@@ -409,14 +474,29 @@ def main():
             config["sources"] = loaded["sources"]
         base_dir = os.path.dirname(config_path)
 
-    if args.project_name:
-        config["project_name"] = args.project_name
-    if args.output_dir:
-        config["output_dir"] = args.output_dir
-    if args.report_dir:
-        config["report_dir"] = args.report_dir
-    if args.state_file:
-        config["state_file"] = args.state_file
+    # Set project name (required)
+    config["project_name"] = args.project_name
+    safe_name = sanitize_project_name(args.project_name)
+
+    # Determine workspace - auto-generate if not specified
+    if args.workspace:
+        workspace_dir = args.workspace
+    else:
+        workspace_dir = f"workspace/projects/{safe_name}"
+    workspace_path = os.path.abspath(os.path.join(base_dir, workspace_dir))
+
+    # Derive all paths from workspace
+    output_dir = os.path.join(workspace_path, "data")
+    report_dir = os.path.join(workspace_path, "reports")
+    state_path = os.path.join(workspace_path, "data", "state.json")
+    charter_path = os.path.join(workspace_path, "config", "research-charter.json")
+
+    # Fallback to global charter if project-specific not found
+    if not os.path.exists(charter_path):
+        global_charter = os.path.abspath(os.path.join(base_dir, "config/research-charter.json"))
+        if os.path.exists(global_charter):
+            charter_path = global_charter
+    # Handle remaining config overrides
     if args.lookback_hours is not None:
         config["lookback_hours"] = args.lookback_hours
     if args.cluster_window_hours is not None:
@@ -430,15 +510,48 @@ def main():
     if args.input_jsonl:
         config["input"]["path"] = args.input_jsonl
 
-    output_dir = os.path.abspath(os.path.join(base_dir, config.get("output_dir", "./data")))
-    report_dir = os.path.abspath(os.path.join(base_dir, config.get("report_dir", "./reports")))
-    state_path = os.path.abspath(os.path.join(base_dir, config.get("state_file", "./data/state.json")))
+    # Data collection options
+    if args.collect:
+        config["collect"] = True
+    if args.sources:
+        config["enabled_sources"] = [s.strip() for s in args.sources.split(",")]
+    if args.query:
+        config["query"] = args.query
 
+    # Load data source configurations and API keys
+    sources_json_path = os.path.join(base_dir, "config", "sources.json")
+    keys_json_path = os.path.join(base_dir, "config", "keys.json")
+
+    source_configs = load_source_configs(sources_json_path)
+    api_keys = load_api_keys(keys_json_path)
+
+    # Set up collector registry
+    registry = setup_registry()
+
+    # Enable sources based on config or CLI args
+    if config.get("enabled_sources"):
+        config["sources"] = config["enabled_sources"]
+    elif not config.get("sources"):
+        # Default to enabled sources from sources.json
+        config["sources"] = [
+            name for name, cfg in source_configs.items()
+            if cfg.enabled
+        ][:5]  # Limit to 5 sources by default
+
+    # Create project directory structure
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(report_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(charter_path), exist_ok=True)
+
+    print(f"📁 Project workspace: {workspace_path}")
+
+    # Load research charter if exists
+    charter = load_research_charter(charter_path)
+    if charter:
+        print(f"loaded research charter: {charter.get('project_id', 'unknown')}")
 
     state = load_json(state_path, {"seen_urls": [], "seen_fingerprints": [], "last_run_at": None})
-    collected, source_stats = collect_items(config, input_jsonl=args.input_jsonl)
+    collected, source_stats = collect_items(config, registry, source_configs, api_keys)
     append_jsonl(os.path.join(output_dir, "raw.jsonl"), collected)
 
     filtered, filter_stats = filter_and_dedupe(config, state, collected)
@@ -472,7 +585,7 @@ def main():
         "new_items": len(filtered),
     }
     save_json(os.path.join(output_dir, "run_metrics.json"), run_metrics)
-    save_json(os.path.join(output_dir, "analysis_input.json"), build_analysis_brief(config, filtered, filter_stats, source_stats))
+    save_json(os.path.join(output_dir, "analysis_input.json"), build_analysis_brief(config, filtered, filter_stats, source_stats, charter))
     state["last_run_at"] = now_iso()
     save_json(state_path, state)
     print(f"prepared {len(filtered)} items for agent analysis")

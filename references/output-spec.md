@@ -1,31 +1,36 @@
 # Output File Contract
 
-Each run writes a stable set of local artifacts to `workspace/`.
+Each run writes a stable set of local artifacts to `workspace/projects/{project_name}/`.
 
 ## Output Files
 
-- `workspace/data/raw.jsonl`
+All paths relative to project workspace:
+
+- `data/raw.jsonl`
   Raw normalized items from the current and previous runs.
 
-- `workspace/data/candidate_items.jsonl`
+- `data/candidate_items.jsonl`
   Filtered and deduped items prepared for OpenClaw analysis.
 
-- `workspace/data/analysis_input.json`
+- `data/analysis_input.json`
   Machine-readable brief for the outer agent.
 
-- `workspace/data/analysis-result.json`
+- `data/analysis-result.json`
   Final structured analysis written by OpenClaw after reviewing the candidate set.
 
-- `workspace/data/state.json`
+- `data/state.json`
   Dedupe state and last run timestamp.
 
-- `workspace/data/run_metrics.json`
+- `data/run_metrics.json`
   Metrics for the most recent run.
 
-- `workspace/reports/YYYY-MM-DD.md`
+- `data/action-tracker.json`
+  Action items for next steps.
+
+- `reports/YYYY-MM-DD.md`
   Daily report for the current run.
 
-- `workspace/reports/weekly-YYYY-WW.md`
+- `reports/weekly-YYYY-WW.md`
   Weekly rollup based on recent enriched items.
 
 ## Key Payloads

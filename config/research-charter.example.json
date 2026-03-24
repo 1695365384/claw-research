@@ -1,0 +1,51 @@
+{
+  "project_id": "project-name-research-YYYY",
+  "research_phase": "exploration",
+  "research_questions": [
+    {
+      "id": "RQ1",
+      "question": "What is the core pain point users experience in this domain?",
+      "hypothesis": "Users struggle with [specific problem] and waste [X hours/time] per week",
+      "type": "exploratory",
+      "priority": "critical"
+    },
+    {
+      "id": "RQ2",
+      "question": "Are users willing to pay for a solution?",
+      "hypothesis": "Users with [specific criteria] would pay $X-Y/month",
+      "type": "validation",
+      "priority": "high"
+    }
+  ],
+  "target_personas": [
+    {
+      "label": "Primary Target User",
+      "criteria": "Description of this user segment",
+      "interview_target": 5,
+      "characteristics": ["characteristic 1", "characteristic 2"]
+    }
+  ],
+  "success_criteria": {
+    "min_evidence_count": 10,
+    "min_persona_diversity": 3,
+    "required_confidence_level": "medium",
+    "validation_thresholds": {
+      "pain_validation": "At least 5 independent pain mentions",
+      "payment_signal": "At least 3 explicit willingness-to-pay signals"
+    }
+  },
+  "assumptions": [
+    "The pain point is strong enough that users would pay for a solution",
+    "Existing solutions have significant gaps",
+    "The target market is large enough to support a business"
+  ],
+  "out_of_scope": [
+    "Related but separate problems",
+    "Segments outside the target persona"
+  ],
+  "methodology": {
+    "primary_methods": ["desk_research", "signal_analysis"],
+    "analysis_frameworks": ["bayesian_scoring", "swot", "competitor_landscape"],
+    "data_sources": ["community_posts", "competitor_reviews", "industry_reports"]
+  }
+}

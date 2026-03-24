@@ -2,15 +2,57 @@
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+.Python
 .pytest_cache/
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+*.manifest
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
 
 # Runtime workspace (generated files)
-workspace/
+# Keep config templates, ignore user data
+workspace/projects/
+workspace/data/
+workspace/reports/
+workspace/knowledge/insight-library.jsonl
+!workspace/config/sources.json
+!workspace/config/keys.json.example
+
+# Sensitive files - NEVER commit
+workspace/config/keys.json
+*.key
+*.pem
+.env.*
+credentials.json
+secrets.json
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*.swn
 
 # OS
 .DS_Store
 Thumbs.db
+Thumbs.db:encryptable
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp

@@ -33,19 +33,21 @@ Use a config file only when you want to preserve a reusable preset.
 
 ## Config Shape
 
+All paths are relative to `workspace/projects/{project_name}/`:
+
 ```json
 {
   "project_name": "shopify-support-research",
-  "output_dir": "./workspace/data",
-  "report_dir": "./workspace/reports",
-  "state_file": "./workspace/data/state.json",
+  "output_dir": "./data",
+  "report_dir": "./reports",
+  "state_file": "./data/state.json",
   "max_items_per_source": 50,
   "lookback_hours": 48,
   "cluster_window_hours": 168,
   "input": {
     "mode": "external_file",
     "name": "openclaw-collected-items",
-    "path": "./workspace/input/items.jsonl"
+    "path": "./input/items.jsonl"
   },
   "keywords": {
     "include_any": ["shopify seller", "refund"],

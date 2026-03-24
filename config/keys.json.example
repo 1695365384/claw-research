@@ -1,0 +1,24 @@
+{
+  "reddit": {
+    "client_id": "YOUR_CLIENT_ID",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "user_agent": "claw-research/1.0"
+  },
+  "twitter": {
+    "bearer_token": "YOUR_TWITTER_BEARER_TOKEN",
+    "api_key": "YOUR_TWITTER_API_KEY",
+    "api_secret": "YOUR_TWITTER_API_SECRET"
+  },
+  "product_hunt": {
+    "api_token": "YOUR_PRODUCT_HUNT_API_TOKEN"
+  },
+  "openai": {
+    "api_key": "YOUR_OPENAI_API_KEY"
+  },
+  "serper": {
+    "api_key": "YOUR_SERPER_API_KEY"
+  },
+  "scraper_api": {
+    "api_key": "YOUR_SCRAPER_API_KEY"
+  }
+}

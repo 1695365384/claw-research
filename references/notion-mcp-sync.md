@@ -2,19 +2,19 @@
 
 Default behavior after a research run:
 
-1. Produce `workspace/data/analysis-result.json`
+1. Produce `workspace/projects/{project_name}/data/analysis-result.json`
 2. Create or update one Notion page for the run
 3. Use the standard page layout below unless the user explicitly asks for a different format
 4. Use the current runtime date for the page title and any generated timestamps
 
 This skill does not write to Notion directly at the script layer.
 
-Instead, it emits:
+Instead, it emits from `workspace/projects/{project_name}/`:
 
-- `workspace/reports/YYYY-MM-DD.md`
-- `workspace/reports/weekly-YYYY-WW.md`
-- `workspace/data/analysis_input.json`
-- `workspace/data/analysis-result.json`
+- `reports/YYYY-MM-DD.md`
+- `reports/weekly-YYYY-WW.md`
+- `data/analysis_input.json`
+- `data/analysis-result.json`
 
 An external agent can read those local artifacts and sync them to Notion through Notion MCP.
 
@@ -57,7 +57,7 @@ When possible:
 ## Recommended MCP Flow
 
 1. Read the latest report and analysis inputs
-2. Let OpenClaw produce `workspace/data/analysis-result.json`
+2. Let OpenClaw produce `workspace/projects/{project_name}/data/analysis-result.json`
 3. Create or update a Notion page for the current run
 4. Write:
    - a summary section
@@ -71,7 +71,7 @@ When possible:
 
 If Notion MCP is unavailable, unreachable, or fails:
 
-1. Keep `workspace/data/analysis-result.json` as the source of truth
+1. Keep `workspace/projects/{project_name}/data/analysis-result.json` as the source of truth
 2. Do not silently skip the sync step
 3. State explicitly in the final response: `SYNC_SKIPPED`
 4. Briefly explain whether the issue was tool availability, permission, or write failure
