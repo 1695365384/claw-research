@@ -1,0 +1,131 @@
+{
+  "sources": {
+    "hacker_news": {
+      "type": "api",
+      "url": "https://hn.algolia.com/api/v1/search_by_date",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["技术", "产品", "startup", "痛点", "developer", "tool", "SaaS", "AI"],
+      "description": "Hacker News 技术社区讨论"
+    },
+    "woshipm": {
+      "type": "rss",
+      "url": "https://www.woshipm.com/feed",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["产品经理", "产品", "PM", "运营", "B端", "C端", "用户研究", "需求分析"],
+      "description": "人人都是产品经理 - 中文PM社区"
+    },
+    "pmcaff": {
+      "type": "rss",
+      "url": "https://www.pmcaff.com/rss",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["产品", "PM", "运营", "增长", "数据分析"],
+      "description": "PMCAFF 产品经理社区"
+    },
+    "zhihu": {
+      "type": "search",
+      "url": "https://www.zhihu.com/search",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["问答", "讨论", "痛点", "建议", "反馈", "产品", "工作", "职场"],
+      "description": "知乎中文问答社区"
+    },
+    "reddit": {
+      "type": "api",
+      "subreddits": ["ProductManagement", "productmanager", "SaaS", "startups", "entrepreneur"],
+      "requires_auth": true,
+      "auth_type": "oauth",
+      "auth_hint": "需要 Reddit API credentials (client_id, client_secret)。获取方式: https://www.reddit.com/prefs/apps",
+      "enabled": true,
+      "keywords": ["product", "pain point", "feedback", "SaaS", "startup", "discussion"],
+      "description": "Reddit 社区讨论"
+    },
+    "twitter": {
+      "type": "api",
+      "requires_auth": true,
+      "auth_type": "bearer_token",
+      "auth_hint": "需要 Twitter API Bearer Token。获取方式: https://developer.twitter.com/",
+      "enabled": false,
+      "keywords": ["社交", "讨论", "趋势", "产品", "反馈"],
+      "description": "Twitter 社交讨论 (需要 API)"
+    },
+    "product_hunt": {
+      "type": "api",
+      "url": "https://api.producthunt.com/v2/api/v2/posts",
+      "requires_auth": true,
+      "auth_type": "api_key",
+      "auth_hint": "需要 Product Hunt API Token。获取方式: https://www.producthunt.com/v1/oauth/applications",
+      "enabled": false,
+      "keywords": ["product", "tool", "launch", "startup"],
+      "description": "Product Hunt 产品发布平台 (需要 API)"
+    },
+    "google": {
+      "type": "search",
+      "engine": "google",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["通用"],
+      "description": "Google 搜索"
+    },
+    "bing": {
+      "type": "search",
+      "engine": "bing",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["通用"],
+      "description": "Bing 搜索"
+    },
+    "baidu": {
+      "type": "search",
+      "engine": "baidu",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["中文", "通用"],
+      "description": "百度搜索"
+    },
+    "duckduckgo": {
+      "type": "search",
+      "engine": "duckduckgo",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["通用", "privacy"],
+      "description": "DuckDuckGo 搜索"
+    },
+    "techcrunch": {
+      "type": "rss",
+      "url": "https://techcrunch.com/feed/",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["tech", "startup", "investment", "trend", "产品"],
+      "description": "TechCrunch 科技新闻"
+    },
+    "mind_the_product": {
+      "type": "rss",
+      "url": "https://www.mindtheproduct.com/feed/",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["product management", "PM", "product", "设计", "用户体验"],
+      "description": "Mind the Product PM社区"
+    },
+    "36kr": {
+      "type": "rss",
+      "url": "https://36kr.com/feed",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["创业", "投资", "商业", "科技", "中国"],
+      "description": "36氪科技媒体"
+    },
+    "indie_hackers": {
+      "type": "rss",
+      "url": "https://www.indiehackers.com/feed",
+      "requires_auth": false,
+      "enabled": true,
+      "keywords": ["indie", "solopreneur", "startup", "bootstrapped"],
+      "description": "Indie Hackers 独立开发者社区"
+    }
+  },
+  "version": "2.0",
+  "description": "Claw Research 数据源配置。启用/禁用数据源，调整 keywords 来影响智能选择。配置 API Key 到 keys.json"
+}
