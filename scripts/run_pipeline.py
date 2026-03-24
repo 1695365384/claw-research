@@ -459,6 +459,10 @@ def main():
     parser.add_argument("--max-items-per-source", type=int, default=20, help="Maximum items per source")
     parser.add_argument("--include-keyword", action="append", default=[], help="Only include items containing this keyword")
     parser.add_argument("--exclude-keyword", action="append", default=[], help="Exclude items containing this keyword")
+    parser.add_argument("--config", help="Path to config file (optional)")
+    parser.add_argument("--input-jsonl", help="Path to external input JSONL file")
+    parser.add_argument("--collect", action="store_true", help="Force data collection mode")
+    parser.add_argument("--cluster-window-hours", type=int, default=168, help="Clustering window in hours")
     args = parser.parse_args()
 
     config = default_config()
