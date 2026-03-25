@@ -1,321 +1,245 @@
 ---
 name: claw-research
-description: Hypothesis-driven market demand research with Bayesian probability scoring, strategic analysis frameworks, and action tracking. Use when you need data-driven decision support for product validation with professional research methodology.
+description: Hypothesis-driven market demand research with Bayesian probability scoring and strategic analysis. Use for product validation with professional research methodology.
 ---
 
-# Claw Research
+# Claw Research - Core Prompt
+
+## ⛔ BLOCKER Rules (Must Pass)
+
+**Violation = Invalid Output - Must Redo**
+
+| # | Rule | Check |
+|---|------|-------|
+| 1 | Read sources from `config/sources.json` only | No hardcoded paths |
+| 2 | Every evidence: `full_text` + `source_url` + `source_type` + `published_at` | 4 fields required |
+| 3 | Output `analysis-result.json` with valid JSON | Schema compliant |
+| 4 | Present **full Markdown report** to user | No "see file" shortcuts |
+| 5 | No truncated evidence text | Complete quotes |
+| 6 | No placeholder text | No "TBD" or "..." |
+
+---
 
 ## 6-Stage Workflow
 
-```text
-+=============================================================================+
-|                          CLAW RESEARCH WORKFLOW                              |
-+=============================================================================+
-
-+-------------------+     +-------------------+     +-------------------+
-|  STAGE 1: CHARTER | --> |  STAGE 2: SOURCES | --> | STAGE 3: COLLECT  |
-|  Define Charter    |     |  Read Sources     |     |  Collect Evidence |
-+-------------------+     +-------------------+     +-------------------+
-|                     |     |  [MANDATORY]      |     |                     |
-| research-charter   |     | config/sources.json|     | collectors/        |
-| - questions        |     | - hacker_news      |     | - api_collector    |
-| - hypotheses       |     | - woshipm          |     | - rss_collector    |
-| - personas         |     | - pmcaff           |     | - search_collector |
-| - success_criteria |     | - reddit           |     |                     |
-|                     |     | - techcrunch       |     |                     |
-+-------------------+     +----------+--------+     +----------+--------+
-                                   |                               |
-                                   v                               v
-                          +---------------------------+    +-------------------+
-                          |  MUST READ THIS FILE      |    | raw.jsonl         |
-                          |  config/sources.json      |    | candidate_items   |
-                          +---------------------------+    +----------+--------+
-                                                                    |
-                                                                    v
-+-------------------+     +-------------------+     +-------------------+
-|  STAGE 6: ACTION  | <-- |  STAGE 5: OUTPUT  | <-- | STAGE 4: ANALYZE  |
-|  Action & Knowledge|     |  Output Results   |     |  AI Analysis      |
-+-------------------+     +-------------------+     +-------------------+
-|                     |     |                     |     |                     |
-| action-tracker     |     | analysis-result    |     | Bayesian scoring   |
-| insight-library    |     | .json              |     | Hypothesis valid.  |
-| Notion sync        |     |                     |     | SWOT analysis      |
-|                     |     |                     |     | Competitor map     |
-|                     |     |                     |     | User journey       |
-+-------------------+     +-------------------+     +-------------------+
-
-
-+=============================================================================+
-|                          DATA FLOW (数据流详解)                               |
-+=============================================================================+
-
-+---------------------------+
-|  config/sources.json      |  <=== [FIXED SOURCE] Must read from here
-+---------------------------+
-| type: api / rss / search  |
-| enabled: true / false     |
-| keywords: [...]           |
-| requires_auth: bool       |
-+------------+--------------+
-             |
-             v
-+---------------------------+
-|  scripts/collectors/      |  <=== Called by run_pipeline.py
-+---------------------------+
-| api_collector.py          |  --> Hacker News, Reddit
-| rss_collector.py          |  --> woshipm, pmcaff, 36kr, techcrunch
-| search_collector.py       |  --> Google, Bing, Baidu (TODO)
-+------------+--------------+
-             |
-             v
-+-------------------------------------------+
-|  workspace/projects/{project_name}/data/  |
-+-------------------------------------------+
-| raw.jsonl                 |  --> Raw collected data
-| candidate_items.jsonl     |  --> Filtered candidates
-| analysis_input.json       |  --> AI input
-+------------+------------------------------+
-             |
-             v
-+---------------------------+
-|  AI Analysis              |
-+---------------------------+
-| Bayesian scoring          |
-| Hypothesis validation     |
-| Strategic analysis        |
-+------------+--------------+
-             |
-             v
-+---------------------------+
-|  Output                   |
-+---------------------------+
-| analysis-result.json      |
-| Notion page (via MCP)     |
-| action-tracker.json       |
-+---------------------------+
+```
+CHARTER → SOURCES → COLLECT → ANALYZE → OUTPUT → ACTION
+ (opt)   [BLOCKER]   auto     AI core   [BLOCKER]  track
 ```
 
----
+### Stage 1: Charter (Optional)
+Read `workspace/projects/{project}/config/research-charter.json` if exists.
 
-## Execution Steps
+### Stage 2: Sources [BLOCKER]
 
-### Step 1: Read Charter (Optional)
-Read `workspace/projects/{project_name}/config/research-charter.json` if exists:
-```json
-{
-  "project_id": "string",
-  "research_questions": [{ "id": "RQ1", "question": "...", "hypothesis": "..." }],
-  "target_personas": [...],
-  "success_criteria": {...}
-}
-```
-
-### Step 2: Read Sources [MANDATORY]
-Read `config/sources.json` to get available data sources:
-```json
-{
-  "sources": {
-    "source_name": {
-      "type": "api | rss | search",
-      "url": "...",
-      "enabled": true,
-      "keywords": [...]
-    }
-  }
-}
-```
-
-### Step 3: Collect Evidence via Collectors
-Call collectors from `scripts/collectors/` based on source type:
-
-| Source Type | Collector | Example Sources |
-|-------------|-----------|-----------------|
-| `api` | `HackerNewsCollector` | hacker_news |
-| `rss` | `RSSCollector` | woshipm, pmcaff, techcrunch, 36kr |
-| `search` | `SearchCollector` | google, bing, baidu |
-
+**Run pipeline to collect data:**
 ```bash
-# Run pipeline - ALWAYS uses config/sources.json
 python3 scripts/run_pipeline.py \
-  --project-name "project-name" \
+  --project-name "my-research" \
   --sources "hacker_news,woshipm,pmcaff" \
   --query "product pain points"
 ```
 
-### Step 4: AI Analysis
-Read from `workspace/projects/{project_name}/data/`:
+**Key options:**
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--project-name` | Unique project identifier | Required |
+| `--sources` | Comma-separated sources | All enabled |
+| `--query` | Search query | From charter |
+| `--lookback-hours` | Time window | 720 (30 days) |
+| `--max-items-per-source` | Items per source | 50 |
+| `--include-keyword` | Filter: must contain | None |
+| `--exclude-keyword` | Filter: must not contain | None |
+
+**Output:** `workspace/projects/{project}/data/candidate_items.jsonl`
+
+### Stage 3: Collect (Automatic)
+Collectors output to `workspace/projects/{project}/data/`:
+- `raw.jsonl` - Raw data
+- `candidate_items.jsonl` - Filtered items
+
+### Stage 4: Analyze (AI Core)
+Read from `data/`:
 - `analysis_input.json`
 - `candidate_items.jsonl`
+- `research-charter.json` (if exists)
 
-Generate `analysis-result.json`:
-- Bayesian scoring (P(success|evidence), P(payment|evidence))
-- Hypothesis validation (validate or refute each hypothesis)
-- Strategic analysis (SWOT, competitors, user journey)
-- Action items with validation criteria
+**AI performs:**
+1. Pain point analysis
+2. Payment signal detection
+3. Bayesian probability scoring
+4. Hypothesis validation (if charter)
+5. Strategic analysis (SWOT, competitors, journey)
 
-### Step 5: Output Results
-Write to `workspace/projects/{project_name}/data/analysis-result.json` following `references/analysis-result-schema.md`.
+### Stage 5: Output [BLOCKER]
+Write `analysis-result.json` + present full Markdown report to user.
 
-### Step 6: Sync & Track
-- Sync to Notion (if MCP available) following `references/notion-page-template.md`
-- Update action tracker: `python3 scripts/manage_actions.py --project {name} --add "..."`
+### Stage 6: Action (Track)
+
+**Manage action items:**
+```bash
+# List pending actions
+python3 scripts/manage_actions.py --project "my-research" --list-pending
+
+# Add new action
+python3 scripts/manage_actions.py --project "my-research" \
+  --add "Interview 5 target users" \
+  --due "2026-04-15" \
+  --insight "High-volume sellers show strongest pain"
+
+# Complete action
+python3 scripts/manage_actions.py --project "my-research" \
+  --complete "ACTION-001" \
+  --note "Completed 5 interviews, 3 confirmed willingness to pay"
+```
+
+---
+
+## Output Format
+
+### JSON Structure (Write to `analysis-result.json`)
+
+```json
+{
+  "generated_at": "UTC timestamp",
+  "project_name": "string",
+  "top_pain_points": [{ "label", "summary", "evidence_count", "example_urls" }],
+  "candidate_clusters": [{ "name", "summary", "evidence_count", "payment_signal" }],
+  "payment_signals": [{ "label", "summary" }],
+  "bayesian_scores": {
+    "success_probability": {
+      "posterior": 0.35,
+      "prior": { "value": 0.12, "reasoning": "string" },
+      "confidence": "high|medium|low",
+      "signal_assessments": [{ "dimension", "strength", "reasoning", "evidence_quotes", "contribution" }],
+      "calculation_summary": "string",
+      "key_uncertainties": ["string"]
+    },
+    "payment_probability": { /* same structure */ }
+  },
+  "hypothesis_validation": [{ "hypothesis_id", "status", "supporting_evidence", "missing_evidence" }],
+  "strategic_analysis": {
+    "swot": { "strengths", "weaknesses", "opportunities", "threats" },
+    "competitor_landscape": [{ "name", "gap", "our_advantage" }],
+    "user_journey_stages": [{ "stage", "pain_level", "evidence_count" }]
+  },
+  "actionable_insights": [{ "insight", "evidence_basis", "recommended_action", "priority" }],
+  "action_items": [{ "id", "action", "owner", "status" }],
+  "strongest_examples": [{ "title", "url", "reason" }],
+  "risks_or_gaps": ["string"]
+}
+```
+
+### Markdown Report (Present to User)
+
+```markdown
+# [Project] Market Research Report
+**Generated**: YYYY-MM-DD | **Confidence**: high/medium/low
+
+## Executive Summary
+**Conclusion**: [One sentence]
+**Actions**: 1. [P0] ... 2. [P1] ... 3. [P2] ...
+**Risks**: [Top 2 risks]
+
+## Bayesian Scores
+| Probability | Prior | Posterior | Key Signals |
+|-------------|-------|-----------|-------------|
+| Success | 12% | 35% | pain_intensity +10% |
+| Payment | 6% | 18% | economic_impact +8% |
+
+## Top Pain Points
+### Pain 1: [Title] (X evidence)
+> **原文**: "[Full quote]"
+> **来源**: [Name](URL) | **类型**: community_discussion | **时间**: YYYY-MM-DD
+
+## Strategic Analysis
+**SWOT**: S: [evidence] | W: [gap] | O: [trend] | T: [risk]
+**Competitors**: [Competitor] - gap: [gap] - advantage: [ours]
+
+## Action Items
+- [ ] ACTION-001: [Task] (Due: YYYY-MM-DD)
+
+## Notion Sync
+[ ] Synced: [URL] OR [ ] SYNC_SKIPPED: [reason]
+```
+
+---
+
+## Bayesian Scoring
+
+### Formula
+```
+Posterior = Prior + Σ(Signal_Strength × Contribution)
+```
+
+### Dimensions
+
+| Type | Dimensions |
+|------|------------|
+| **Success** | pain_intensity, market_evidence, solution_gap, timing_signal, execution_fit |
+| **Payment** | economic_impact, purchase_intent, budget_access, urgency, trust_signals |
+
+### Scoring Rules
+- **Prior**: Estimate from industry context (do NOT hardcode)
+- **Strength**: 0.0-1.0 (based on evidence)
+- **Contribution**: e.g., "+0.10"
+- **Confidence**: high/medium/low
+
+---
+
+## Evidence Format [BLOCKER]
+
+Every evidence quote MUST include:
+
+```markdown
+> **原文**: "[Complete original text]"
+> **来源**: [Source Name](URL)
+> **类型**: community_discussion
+> **发布时间**: YYYY-MM-DD
+```
+
+**Source Types**: `community_discussion` | `blog_article` | `industry_survey` | `competitor_review` | `documentation` | `interview` | `social_post`
 
 ---
 
 ## Completion Checklist
 
-All paths relative to `workspace/projects/{project_name}/`:
-- [ ] `data/candidate_items.jsonl` exists
-- [ ] `data/analysis_input.json` exists
-- [ ] `data/analysis-result.json` exists with complete analysis
-- [ ] Full report presented to user
-- [ ] Evidence quotes with source URLs included
-- [ ] Bayesian calculation shown
-- [ ] Notion synced (or `SYNC_SKIPPED` with reason)
+### [BLOCKER] Must Pass
+- [ ] `analysis-result.json` exists with valid JSON
+- [ ] Full Markdown report presented to user
+- [ ] All evidence has: full_text + URL + type + date
+- [ ] No truncated text, no placeholders
 
----
-
-## MANDATORY: Final Report Output
-
-After completing analysis, you **MUST** output a complete report to the user following this structure:
-
-### Report Template
-
-```markdown
-# [Project Name] Market Research Report
-**Generated**: YYYY-MM-DD HH:mm UTC
-**Data Sources**: X candidate signals
-**Confidence**: high/medium/low
-
----
-
-## Executive Summary
-
-**Core Conclusion**: [One sentence summary]
-
-**Recommended Actions**:
-1. [P0] First action
-2. [P1] Second action
-3. [P2] Third action
-
-**Risk Alert**: [Top 2 risks]
-
----
-
-## Bayesian Scores
-
-### Success Probability: XX%
-- Prior: XX% ([reasoning])
-- Signals: [list contributions]
-- Key Uncertainties: [list]
-
-### Payment Probability: XX%
-- Prior: XX% ([reasoning])
-- Signals: [list contributions]
-- Key Uncertainties: [list]
-
----
-
-## Key Pain Points
-
-### Pain Point 1: [Title] (X evidence)
-
-> **Original**: "[Full quote]"
-> **Source**: [Name](URL)
-> **Type**: community_discussion
-> **Date**: YYYY-MM-DD
-
-[Repeat for each pain point]
-
----
-
-## Strategic Analysis
-
-### SWOT
-- **Strengths**: [with evidence]
-- **Weaknesses**: [with evidence]
-- **Opportunities**: [with evidence]
-- **Threats**: [with evidence]
-
-### Competitors
-| Name | Positioning | Gap | Our Advantage |
-|------|-------------|-----|---------------|
-| ... | ... | ... | ... |
-
----
-
-## Action Items
-
-- [ ] **ACTION-001**: [Task] (Due: YYYY-MM-DD)
-- [ ] **ACTION-002**: [Task] (Due: YYYY-MM-DD)
-
----
-
-## Notion Sync Status
-
-[ ] Synced to Notion: [Page URL]
-OR
-[ ] SYNC_SKIPPED: [reason]
-```
-
-### Evidence Block Format (MANDATORY)
-
-Every evidence MUST include:
-1. **Full original text** - No truncation
-2. **Clickable source URL** - Not just domain
-3. **Source type** - community_discussion, blog_article, etc.
-4. **Publication date** - For context
-
-### Example Evidence Block
-
-```markdown
-> **Original**: "As a PM, I spend 6+ hours in meetings daily. By the time I get to actual work, my brain is fried."
->
-> **Source**: [Reddit r/ProductManagement](https://reddit.com/r/ProductManagement/comments/abc123)
-> **Type**: community_discussion
-> **Date**: 2026-03-20
-```
-
-### DO NOT
-
-- Output only JSON file path without showing report
-- Truncate evidence text
-- Skip source URLs
-- Use placeholder text like "see analysis-result.json"
-
-### ALWAYS
-
-- Output complete report in Markdown format
-- Include all evidence quotes with sources
-- Show Bayesian calculation process
-- State Notion sync status explicitly
+### [REQUIRED] Should Pass
+- [ ] Bayesian prior has reasoning
+- [ ] Signal assessments have evidence_quotes
+- [ ] key_uncertainties listed
+- [ ] Notion sync status stated
 
 ---
 
 ## File Structure
 
 ```
-workspace/projects/{project_name}/
-├── config/
-│   └── research-charter.json
+workspace/projects/{project}/
+├── config/research-charter.json
 ├── data/
 │   ├── raw.jsonl
 │   ├── candidate_items.jsonl
 │   ├── analysis_input.json
-│   ├── analysis-result.json
-│   └── action-tracker.json
-└── reports/
-    └── *.md
+│   └── analysis-result.json
+└── reports/*.md
 
 config/
-├── sources.json          # [FIXED] Data sources config
+├── sources.json          # [BLOCKER] Data sources
 └── keys.json             # API keys (gitignored)
+
+scripts/
+├── run_pipeline.py       # Main pipeline script
+├── manage_actions.py     # Action tracker
+└── collectors/           # Data collectors
+
+references/
+├── analysis-result-schema.md  # Detailed JSON schema
+└── notion-page-template.md    # Report template
 ```
-
----
-
-## References
-
-- `references/research-prompts.md` - AI analysis instructions
-- `references/analysis-result-schema.md` - Output JSON schema
-- `references/notion-page-template.md` - Report template
