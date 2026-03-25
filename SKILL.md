@@ -20,15 +20,22 @@ description: Hypothesis-driven market demand research with Bayesian probability 
 
 ---
 
-## 6-Stage Workflow
+## 7-Stage Workflow
 
 ```
-CHARTER → SOURCES → COLLECT → ANALYZE → OUTPUT → ACTION
- (opt)   [BLOCKER]   auto     AI core   [BLOCKER]  track
+CHARTER → SOURCES → COLLECT → ANALYZE → MD_REPORT → NOTION → ACTION
+ (opt)   [BLOCKER]   auto     AI core   [BLOCKER]  from MD   track
 ```
+
+**Core Principle**: Markdown report is the "Single Source of Truth" (SSOT). Notion sync MUST read from MD file.
+
+---
 
 ### Stage 1: Charter (Optional)
+
 Read `workspace/projects/{project}/config/research-charter.json` if exists.
+
+---
 
 ### Stage 2: Sources [BLOCKER]
 
@@ -40,7 +47,7 @@ python3 scripts/run_pipeline.py \
   --query "product pain points"
 ```
 
-**Key options:**
+**Key Options:**
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--project-name` | Unique project identifier | Required |
@@ -53,28 +60,81 @@ python3 scripts/run_pipeline.py \
 
 **Output:** `workspace/projects/{project}/data/candidate_items.jsonl`
 
+---
+
 ### Stage 3: Collect (Automatic)
+
 Collectors output to `workspace/projects/{project}/data/`:
 - `raw.jsonl` - Raw data
 - `candidate_items.jsonl` - Filtered items
 
+---
+
 ### Stage 4: Analyze (AI Core)
+
 Read from `data/`:
 - `analysis_input.json`
 - `candidate_items.jsonl`
 - `research-charter.json` (if exists)
 
-**AI performs:**
+**AI Performs:**
 1. Pain point analysis
 2. Payment signal detection
 3. Bayesian probability scoring
 4. Hypothesis validation (if charter)
 5. Strategic analysis (SWOT, competitors, journey)
 
-### Stage 5: Output [BLOCKER]
-Write `analysis-result.json` + present full Markdown report to user.
+---
 
-### Stage 6: Action (Track)
+### Stage 5: MD Report [BLOCKER]
+
+**Must generate Markdown file first as the single source for Notion sync.**
+
+1. **Write JSON**: `workspace/projects/{project}/data/analysis-result.json`
+2. **Write Markdown**: `workspace/projects/{project}/reports/analysis-report-{YYYY-MM-DD}.md`
+3. **Present to user**: Display full report in conversation
+
+**Markdown File Path:**
+```
+workspace/projects/{project}/reports/analysis-report-{date}.md
+```
+
+**⚠️ Important**: This MD file is the ONLY data source for Notion sync. Must contain complete content.
+
+---
+
+### Stage 6: Notion Sync (From MD File)
+
+**Read content from Markdown file to sync to Notion, ensuring consistency.**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  analysis-report-{date}.md  ──────►  Notion Page        │
+│  (Single Source of Truth)         (Read from MD file)   │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Sync Process:**
+1. Read complete content from `reports/analysis-report-{date}.md`
+2. Parse Markdown structure (headings, tables, blockquotes, etc.)
+3. Convert to Notion API format (callout, to_do, divider, etc.)
+4. Create/Update Notion page
+
+**⚠️ Prohibited:**
+- ❌ Do NOT regenerate Notion content from analysis-result.json
+- ❌ Do NOT skip MD file and sync directly
+- ❌ Do NOT simplify or truncate content from MD file
+
+**Notion Sync Status:**
+```markdown
+## Notion Sync Status
+- [x] Synced: https://notion.so/page-id
+- [ ] SYNC_SKIPPED: [reason - e.g., "Notion MCP not configured"]
+```
+
+---
+
+### Stage 7: Action (Track)
 
 **Manage action items:**
 ```bash
@@ -149,12 +209,12 @@ python3 scripts/manage_actions.py --project "my-research" \
 
 ## Top Pain Points
 ### Pain 1: [Title] (X evidence)
-> **原文**: "[Full quote]"
-> **来源**: [Name](URL) | **类型**: community_discussion | **时间**: YYYY-MM-DD
+> **Original**: "[Full quote]"
+> **Source**: [Name](URL) | **Type**: community_discussion | **Date**: YYYY-MM-DD
 
 ## Strategic Analysis
-**SWOT**: S: [evidence] | W: [gap] | O: [trend] | T: [risk]
-**Competitors**: [Competitor] - gap: [gap] - advantage: [ours]
+**SWOT**: Strengths: [evidence] | Weaknesses: [gap] | Opportunities: [trend] | Threats: [risk]
+**Competitors**: [Competitor] - Gap: [gap] - Our Advantage: [ours]
 
 ## Action Items
 - [ ] ACTION-001: [Task] (Due: YYYY-MM-DD)
@@ -192,10 +252,10 @@ Posterior = Prior + Σ(Signal_Strength × Contribution)
 Every evidence quote MUST include:
 
 ```markdown
-> **原文**: "[Complete original text]"
-> **来源**: [Source Name](URL)
-> **类型**: community_discussion
-> **发布时间**: YYYY-MM-DD
+> **Original**: "[Complete original text]"
+> **Source**: [Source Name](URL)
+> **Type**: community_discussion
+> **Published**: YYYY-MM-DD
 ```
 
 **Source Types**: `community_discussion` | `blog_article` | `industry_survey` | `competitor_review` | `documentation` | `interview` | `social_post`
@@ -206,6 +266,7 @@ Every evidence quote MUST include:
 
 ### [BLOCKER] Must Pass
 - [ ] `analysis-result.json` exists with valid JSON
+- [ ] `reports/analysis-report-{date}.md` exists with full Markdown report
 - [ ] Full Markdown report presented to user
 - [ ] All evidence has: full_text + URL + type + date
 - [ ] No truncated text, no placeholders
@@ -214,7 +275,13 @@ Every evidence quote MUST include:
 - [ ] Bayesian prior has reasoning
 - [ ] Signal assessments have evidence_quotes
 - [ ] key_uncertainties listed
-- [ ] Notion sync status stated
+- [ ] Notion sync completed FROM MD FILE (not from JSON)
+- [ ] Notion sync status stated in conversation
+
+### [QUALITY] Consistency Check
+- [ ] MD file content == User conversation output
+- [ ] Notion content == MD file content (no simplification)
+- [ ] Evidence quotes preserved across all outputs
 
 ---
 
@@ -228,7 +295,10 @@ workspace/projects/{project}/
 │   ├── candidate_items.jsonl
 │   ├── analysis_input.json
 │   └── analysis-result.json
-└── reports/*.md
+└── reports/
+    ├── analysis-report-{date}.md   # ⭐ Single Source of Truth (SSOT)
+    ├── {date}.md                   # Auto-generated brief report
+    └── weekly-{year}-{week}.md     # Weekly report
 
 config/
 ├── sources.json          # [BLOCKER] Data sources
@@ -243,3 +313,47 @@ references/
 ├── analysis-result-schema.md  # Detailed JSON schema
 └── notion-page-template.md    # Report template
 ```
+
+---
+
+## Notion Sync Flow (From MD File)
+
+```
+                    ┌──────────────────────────────────┐
+                    │  Stage 5: MD Report Generation   │
+                    └───────────────┬──────────────────┘
+                                    │
+                                    ▼
+          ┌─────────────────────────────────────────────────┐
+          │  reports/analysis-report-{date}.md              │
+          │  ─────────────────────────────────              │
+          │  • Executive Summary                            │
+          │  • Bayesian Scores (tables)                     │
+          │  • Pain Points (full evidence quotes)           │
+          │  • Strategic Analysis (SWOT, competitors)       │
+          │  • Action Items                                 │
+          └───────────────────┬─────────────────────────────┘
+                              │
+                              │ READ (Only data source)
+                              │
+                              ▼
+          ┌─────────────────────────────────────────────────┐
+          │  Stage 6: Notion Sync                           │
+          │  ─────────────────────                          │
+          │  • Parse MD file structure                      │
+          │  • Convert to Notion block format               │
+          │  • Preserve content integrity (no simplification)│
+          └───────────────────┬─────────────────────────────┘
+                              │
+                              ▼
+          ┌─────────────────────────────────────────────────┐
+          │  Notion Page                                    │
+          │  ──────────                                     │
+          │  Content == MD File Content ✓                   │
+          └─────────────────────────────────────────────────┘
+```
+
+**⚠️ Consistency Guarantee:**
+1. MD file is the Single Source of Truth (SSOT)
+2. Notion sync MUST read from MD file
+3. Three outputs must be consistent: MD file == Conversation output == Notion page
